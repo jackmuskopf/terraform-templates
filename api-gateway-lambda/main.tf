@@ -16,6 +16,25 @@ locals {
 # API Gateway
 resource "aws_api_gateway_rest_api" "api" {
   name = "ApiGatewayLambda-${var.stage}"
+
+  policy = <<POLICY
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal" : "*",
+            "Action": [
+                "execute-api:Invoke"
+            ],
+            "Condition": {
+                "IpAddress": {"aws:SourceIp": ${jsonencode(var.trusted_ips)}}
+            },
+            "Resource": "arn:aws:execute-api:*:*:*"
+        }
+    ]
+}
+POLICY
 }
 
 resource "aws_api_gateway_resource" "resource" {
@@ -27,7 +46,7 @@ resource "aws_api_gateway_resource" "resource" {
 resource "aws_api_gateway_method" "method" {
   rest_api_id   = "${aws_api_gateway_rest_api.api.id}"
   resource_id   = "${aws_api_gateway_resource.resource.id}"
-  http_method   = "GET"
+  http_method   = "ANY"
   authorization = "NONE"
 }
 
@@ -35,12 +54,25 @@ resource "aws_api_gateway_integration" "integration" {
   rest_api_id             = "${aws_api_gateway_rest_api.api.id}"
   resource_id             = "${aws_api_gateway_resource.resource.id}"
   http_method             = "${aws_api_gateway_method.method.http_method}"
-  integration_http_method = "POST"
+  integration_http_method = "ANY"
   type                    = "AWS_PROXY"
 
   # date in uri is api version of lambda?
-  uri = "arn:aws:apigateway:${local.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.lambda.arn}/invocations"
+  uri = "${aws_lambda_function.lambda.invoke_arn}"
 }
+
+resource "aws_api_gateway_deployment" "deploy" {
+  depends_on  = ["aws_api_gateway_integration.integration"]
+  rest_api_id = "${aws_api_gateway_rest_api.api.id}"
+  stage_name  = "${var.stage}"
+}
+
+# or like this
+# resource "aws_api_gateway_stage" "stage" {
+#   stage_name    = "${var.stage}"
+#   rest_api_id   = "${aws_api_gateway_rest_api.api.id}"
+#   deployment_id = "${aws_api_gateway_deployment.deploy.id}"
+# }
 
 # Lambda
 resource "aws_lambda_permission" "apigw_lambda" {
@@ -50,7 +82,7 @@ resource "aws_lambda_permission" "apigw_lambda" {
   principal     = "apigateway.amazonaws.com"
 
   # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
-  source_arn = "arn:aws:execute-api:${local.region}:${local.account_id}:${aws_api_gateway_rest_api.api.id}/*/${aws_api_gateway_method.method.http_method}/${aws_api_gateway_resource.resource.path}"
+  source_arn = "${aws_api_gateway_deployment.deploy.execution_arn}/*/*"
 }
 
 resource "aws_lambda_function" "lambda" {
