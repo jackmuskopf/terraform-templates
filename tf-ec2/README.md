@@ -8,7 +8,7 @@ terraform {
   backend "s3" {
     profile        = "my_aws_profile"
     bucket         = "my-terraform-state-bucket"
-    key            = "api-gateway-lambda.tfstate"
+    key            = "my-ec2.tfstate"
     region         = "us-east-1"
   }
 }
