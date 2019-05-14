@@ -1,6 +1,6 @@
-make zip
-terraform init
-terraform apply
+ - `make zip`
+ - `terraform init`
+ - `terraform apply`
 
 also, you might add a file `backend.tf` with contents something like:
 
