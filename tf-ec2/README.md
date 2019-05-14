@@ -1,3 +1,5 @@
+deploys an ec2 with whitelisted IPs and installs your stuff (edit `user_data` in `main.tf`)
+
  - `terraform init`
  - `terraform apply`
 
