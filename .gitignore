@@ -7,3 +7,6 @@
 
 # .tfvars files
 *.tfvars
+
+# a file where I usually specify my remote state
+backend.tf
