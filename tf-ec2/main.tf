@@ -109,7 +109,7 @@ resource "aws_security_group" "ec2" {
 }
 
 resource "aws_instance" "ec2" {
-  count         = 3
+  count         = 1
   ami           = "ami-0de53d8956e8dcf80"
   instance_type = "t2.micro"
 
@@ -123,6 +123,9 @@ resource "aws_instance" "ec2" {
 
   user_data = <<SCRIPT
 #!/bin/bash
+
+# install git 
+yum install git -y
 
 # install docker
 yum update -y
