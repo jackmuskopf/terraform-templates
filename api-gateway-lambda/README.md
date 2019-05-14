@@ -2,7 +2,7 @@
  - `terraform init`
  - `terraform apply`
 
-also, you might add a file `backend.tf` with contents something like:
+also, if you want a remote state, you might add a file `backend.tf` with contents something like:
 
 ```
 terraform {
